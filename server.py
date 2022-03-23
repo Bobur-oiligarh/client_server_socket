@@ -15,43 +15,55 @@ class Server:
         self.server_socket.bind((self.server_host, self.port))
         self.server_socket.listen()
 
-    def send_broadcast_message(self, message):
+    def send_broadcast_message(self, sender, message):
         for client in self.clients:
-            client.send(message)
+            if sender != client:
+                client.send(message)
+
+    def login(self, client):
+        while True:
+            try:
+                message = client.recv(1024).decode("utf-8")
+                if str(message).lower() == "login":
+
+            except:
+                pass
 
     def message_handle(self, client):
         while True:
             try:
                 message = client.recv(1024)
-                self.send_broadcast_message(message)
+                self.send_broadcast_message(client, f"[{message}]")
             except:
                 index = self.clients.index(client)
                 self.clients.remove(client)
                 client.close()
                 client_nickname = self.clients_nicknames[index]
-                self.send_broadcast_message(f"{client_nickname} left the chat".encode('utf-8'))
+                self.send_broadcast_message(client, f"[{client_nickname}] left the chat".encode('utf-8'))
                 self.clients_nicknames.remove(client_nickname)
                 break
 
     def receive_message(self):
         while True:
             client, address = self.server_socket.accept()
-            print(f"Connected with {str(address)}")
+            print(f"User connected with address - {str(address)}")
 
             client.send('NICK'.encode('utf-8'))
             client_nickname = client.recv(1024).decode('utf-8')
             self.clients_nicknames.append(client_nickname)
             self.clients.append(client)
 
-            print(f"Nickname of the client is  - {client_nickname}")
-            self.send_broadcast_message(f"{client_nickname} joined the chat!".encode('utf-8'))
-            client.send('You have connected to the server!'.encode('utf-8'))
+            print(f"Nickname of the client is  - [{client_nickname}]")
+            self.send_broadcast_message(client, f"[{client_nickname}] joined the chat!".encode('utf-8'))
+            client.send(f"[{client_nickname}] - you have connected to the server!".encode('utf-8'))
 
             thread = threading.Thread(target=self.message_handle, args=(client,))
             thread.start()
 
             print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1} ")
             print(self.clients_nicknames)
+
+
 
 if __name__ == '__main__':
     server_host = socket.gethostbyname(socket.gethostname())
