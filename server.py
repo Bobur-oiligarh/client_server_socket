@@ -4,7 +4,10 @@ import threading
 
 
 class Server:
-    """ """
+    """
+    Receives messages from users and sends to other.
+    """
+
     def __init__(self, server_host, port):
         self.server_host = server_host
         self.port = port
@@ -13,20 +16,31 @@ class Server:
         self.clients_nicknames = []
 
     def create_server(self):
+        """
+        Binds the socket to server host.
+        """
         self.server_socket.bind((self.server_host, self.port))
         self.server_socket.listen()
+        print("[STARTING] server is starting ...")
 
     def send_broadcast_message(self, sender, message):
+        """
+        Accepts sender, message as arguments and sends broadcast message to all users without sender.
+        """
         for client in self.clients:
             if sender != client:
                 client.send(message)
 
     def user_register(self, client):
+        """
+        Accepts one argument - client, and registers this client.
+        Registered user's datas writing to "users_datas.json" file
+        """
         client.send(f"Please type your username to register to the service: ".encode('utf-8'))
         username = client.recv(1024).decode('utf-8')
         client.send(f"Please type password to end the register to the service: ".encode('utf-8'))
         password = client.recv(1024).decode('utf-8')
-        new_user ={"username": username, "password": password}
+        new_user = {"username": username, "password": password}
 
         with open('users_datas.json', 'r') as f:
             allowed_users = json.load(f)
@@ -35,6 +49,9 @@ class Server:
             json.dump(allowed_users, f)
 
     def user_log_in(self, client):
+        """
+        Accepts one argument - client, and logins this client.
+        """
         client.send(f"Please type your username to log in the service: ".encode('utf-8'))
         username = client.recv(1024).decode('utf-8')
 
@@ -52,6 +69,9 @@ class Server:
                     self.register()
 
     def message_handle(self, client):
+        """
+        Handles the client, which sent a message.
+        """
         while True:
             try:
                 message = client.recv(1024).decode('utf-8')
@@ -71,6 +91,10 @@ class Server:
                 break
 
     def receive_message(self):
+        """
+        Receives messages from users and  sends these messages to another one.
+        Sends a "NICK" message to a new user and gets his nickname.
+        """
         while True:
             client, address = self.server_socket.accept()
             print(f"User connected with address - {str(address)}")
@@ -90,16 +114,5 @@ class Server:
 
             print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1} ")
             print(self.clients_nicknames)
-
-
-
-if __name__ == '__main__':
-    server_host = socket.gethostbyname(socket.gethostname())
-    port = 50505
-    server = Server(server_host, port)
-    server.create_server()
-    print("[STARTING] server is starting ...")
-    server.receive_message()
-
 
 
