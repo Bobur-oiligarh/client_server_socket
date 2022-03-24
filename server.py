@@ -54,8 +54,13 @@ class Server:
     def message_handle(self, client):
         while True:
             try:
-                message = client.recv(1024)
-                self.send_broadcast_message(client, message)
+                message = client.recv(1024).decode('utf-8')
+                if message.lower() == "login":
+                    self.user_log_in(client)
+                elif message.lower() == "register":
+                    self.user_register(client)
+                else:
+                    self.send_broadcast_message(client, message.encode('utf-8'))
             except:
                 index = self.clients.index(client)
                 self.clients.remove(client)
@@ -79,11 +84,6 @@ class Server:
             client.send(f"You have connected to the server!".encode('utf-8'))
 
             client.send(f"To log in to the chat type - 'login', type 'register' to register the chat".encode('utf-8'))
-            message = client.recv(1024).decode('utf-8')
-            if message.lower() == "login":
-                self.user_log_in(client)
-            elif message.lower() == "register":
-                self.user_register(client)
 
             thread = threading.Thread(target=self.message_handle, args=(client,))
             thread.start()
